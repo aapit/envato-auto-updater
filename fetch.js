@@ -1,7 +1,7 @@
 var http = require('http');
 var url = require('url');
 var UrlPattern = require('url-pattern');
-var querystring = require('querystring');
+var request = require('request');
 
 if (
     process.env.ENVATO_CLIENT_ID === undefined ||
@@ -36,63 +36,56 @@ function parseUrl(url) {
     return pattern.match(url);
 }
 
-function displayHome(request, response, apiBaseUrl) {
+function displayHome(req, res, apiBaseUrl) {
     var redirectUrl = process.env.ENVATO_CLIENT_URL + '/auth-confirm';
-    var approveUrl = apiBaseUrl + 'authorization?response_type=code'
+    var approveUrl = apiBaseUrl + '/authorization?response_type=code'
                  + '&client_id=' + process.env.ENVATO_CLIENT_ID
                  + '&redirect_uri=' + redirectUrl
     ;
 
-    response.writeHead(200, {"Content-Type": "text/html; charset=utf-8"});
-    response.write('<h1>Envato Auto-Uploader</h1>');
-    response.write('<a href="' + approveUrl + '">Approve API access for the auto-downloader.</a>');
-    response.end("\n");
+    res.writeHead(200, {"Content-Type": "text/html; charset=utf-8"});
+    res.write('<h1>Envato Auto-Uploader</h1>');
+    res.write('<a href="' + approveUrl + '">Approve API access for the auto-downloader.</a>');
+    res.end("\n");
 }
 
-function postRequest(request, response, requestToken, apiBaseUrl) {
-    var requestPath = '/token';
-    var post_data = querystring.stringify({
+function postRequest(req, res, requestToken, apiBaseUrl) {
+    var onPostResponse = function(error, res, body) {
+        if (!error && res.statusCode == 200) {
+            console.log(body) // Show the HTML for the Google homepage.
+        }
+    }
+
+    var requestUrl = apiBaseUrl + '/token';
+    var postData = {
         'grant_type': 'authorization_code',
         'code': requestToken,
         'client_id': process.env.ENVATO_CLIENT_ID,
         'client_secret': process.env.ENVATO_CLIENT_SECRET
-    });
-
-    var post_options = {
-        host: getDomain(apiBaseUrl),
-        port: getPort(apiBaseUrl),
-        path: requestPath,
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Content-Length': Buffer.byteLength(post_data)
-        }
     };
 
-    var post_req = http.request(post_options, function(res) {
-        res.setEncoding('utf8');
-        res.on('data', function (chunk) {
-          console.log('Response: ' + chunk);
-        });
-    });
-
-    post_req.write(post_data);
-    post_req.end();
+    request.post(
+        {
+            url: requestUrl,
+            form: postData
+        },
+        onPostResponse
+    );
 }
 
-function onRequest(request, response) {
-    var apiBaseUrl = 'https://api.envato.com/';
-    var queryData = url.parse(request.url, true).query;
-    console.log('Incoming path request: ' + request.url);
+function onRequest(req, res) {
+    var apiBaseUrl = 'https://api.envato.com';
+    var queryData = url.parse(req.url, true).query;
+    console.log('Incoming path request: ' + req.url);
 
-    if (request.url.indexOf('/auth-confirm') === 0) {
+    if (req.url.indexOf('/auth-confirm') === 0) {
         // User is redirected after approving Envato API access
         var requestToken = queryData.code;
-        postRequest(request, response, requestToken, apiBaseUrl);
+        postRequest(req, res, requestToken, apiBaseUrl);
 
-        //response.end();
+        //res.end();
     } else {
-        displayHome(request, response, apiBaseUrl);
+        displayHome(req, res, apiBaseUrl);
     }
 }
 
