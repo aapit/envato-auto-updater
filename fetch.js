@@ -1,58 +1,33 @@
 var http = require('http');
 var url = require('url');
-var UrlPattern = require('url-pattern');
 var request = require('request');
+var urlLib = require('./url_lib');
+var env = require('./env');
+var auth = require('./auth');
 
-if (
-    process.env.ENVATO_CLIENT_ID === undefined ||
-    process.env.ENVATO_CLIENT_URL === undefined ||
-    process.env.ENVATO_CLIENT_SECRET === undefined
-) {
-    var errorEnvMissing = "Missing one of the environment variables:\n"
-        + "ENVATO_CLIENT_ID (for instance 'fast-wp-auto-updater-2lk1d0920')\n"
-        + "ENVATO_CLIENT_URL (for instance 'http://localhost.example.com:8888')\n"
-        + "ENVATO_CLIENT_SECRET (for instance '3lkj2f2va2sd98Wmei1d9g38')\n"
-    ;
-    throw new Error(errorEnvMissing);
-}
 
 function getLocalPort() {
-    return getPort(process.env.ENVATO_CLIENT_URL);
+    return urlLib.getPort(env.client.url);
 }
 
-function getPort(url) {
-    return parseUrl(url).port;
-}
-
-function getDomain(url) {
-    return parseUrl(url).subdomain + '.'
-        + parseUrl(url).domain + '.'
-        + parseUrl(url).tld
-    ;
-}
-
-function parseUrl(url) {
-    var pattern = new UrlPattern('(http(s)\\://)(:subdomain.):domain.:tld(\\::port)(/*)')
-    return pattern.match(url);
-}
-
-function displayHome(req, res, apiBaseUrl) {
-    var redirectUrl = process.env.ENVATO_CLIENT_URL + '/auth-confirm';
+function displayStart(req, res, apiBaseUrl) {
+    var redirectUrl = env.client.url + '/auth-confirm';
     var approveUrl = apiBaseUrl + '/authorization?response_type=code'
-                 + '&client_id=' + process.env.ENVATO_CLIENT_ID
-                 + '&redirect_uri=' + redirectUrl
+        + '&client_id=' + env.client.id
+        + '&redirect_uri=' + redirectUrl
     ;
 
     res.writeHead(200, {"Content-Type": "text/html; charset=utf-8"});
     res.write('<h1>Envato Auto-Uploader</h1>');
-    res.write('<a href="' + approveUrl + '">Approve API access for the auto-downloader.</a>');
+    res.write('<a href="' + approveUrl + '">'
+        + 'Approve API access for the auto-downloader.</a>');
     res.end("\n");
 }
 
 function postRequest(req, res, requestToken, apiBaseUrl) {
     var onPostResponse = function(error, res, body) {
         if (!error && res.statusCode == 200) {
-            console.log(body) // Show the HTML for the Google homepage.
+            onResponse(body)
         }
     }
 
@@ -60,8 +35,8 @@ function postRequest(req, res, requestToken, apiBaseUrl) {
     var postData = {
         'grant_type': 'authorization_code',
         'code': requestToken,
-        'client_id': process.env.ENVATO_CLIENT_ID,
-        'client_secret': process.env.ENVATO_CLIENT_SECRET
+        'client_id': env.client.id,
+        'client_secret': env.client.secret
     };
 
     request.post(
@@ -71,6 +46,15 @@ function postRequest(req, res, requestToken, apiBaseUrl) {
         },
         onPostResponse
     );
+}
+
+/**
+ * Receive the response to the authentication request.
+ * @param String body The json response object
+ * @return Void
+ */
+function onResponse(body) {
+    auth.set(body);
 }
 
 function onRequest(req, res) {
@@ -85,11 +69,11 @@ function onRequest(req, res) {
 
         //res.end();
     } else {
-        displayHome(req, res, apiBaseUrl);
+        displayStart(req, res, apiBaseUrl);
     }
 }
 
 var server = http.createServer(onRequest);
 server.listen(getLocalPort());
 
-console.log('Visit ' + process.env.ENVATO_CLIENT_URL + ' to approve API access to Envato.');
+console.log('Visit ' + env.client.url + ' to approve API access to Envato.');
