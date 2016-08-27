@@ -12,7 +12,8 @@ function getLocalPort() {
 
 function displayStart(req, res, apiBaseUrl) {
     var redirectUrl = env.client.url + '/auth-confirm';
-    var approveUrl  = apiBaseUrl + '/authorization?response_type=code'
+    var approveUrl  = apiBaseUrl + '/authorization'
+        + '?response_type=code'
         + '&client_id=' + env.client.id
         + '&redirect_uri=' + redirectUrl
     ;
