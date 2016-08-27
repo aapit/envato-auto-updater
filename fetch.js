@@ -1,9 +1,9 @@
 var http = require('http');
 var url = require('url');
 var request = require('request');
-var urlLib = require('./lib/url_lib');
-var env = require('./lib/env');
-var auth = require('./lib/auth');
+var urlLib = require('./lib/tools/url');
+var env = require('./lib/envato/env');
+var auth = require('./lib/envato/auth');
 
 
 function getLocalPort() {
