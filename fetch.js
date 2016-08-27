@@ -1,9 +1,9 @@
 var http = require('http');
 var url = require('url');
 var request = require('request');
-var urlLib = require('./url_lib');
-var env = require('./env');
-var auth = require('./auth');
+var urlLib = require('./lib/url_lib');
+var env = require('./lib/env');
+var auth = require('./lib/auth');
 
 
 function getLocalPort() {
@@ -68,6 +68,12 @@ function onRequest(req, res) {
     } else {
         displayStart(req, res, apiBaseUrl);
     }
+}
+
+if (auth.hasAccess()) {
+    console.log('💕 WE GOT ACCESS!');
+} else {
+    console.log('🙈  AIN\'T GOT NO ACCESS!');
 }
 
 var server = http.createServer(onRequest);
