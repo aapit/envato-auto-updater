@@ -12,7 +12,7 @@ function getLocalPort() {
 
 function displayStart(req, res, apiBaseUrl) {
     var redirectUrl = env.client.url + '/auth-confirm';
-    var approveUrl = apiBaseUrl + '/authorization?response_type=code'
+    var approveUrl  = apiBaseUrl + '/authorization?response_type=code'
         + '&client_id=' + env.client.id
         + '&redirect_uri=' + redirectUrl
     ;
@@ -40,10 +40,7 @@ function postRequest(req, res, requestToken, apiBaseUrl) {
     };
 
     request.post(
-        {
-            url: requestUrl,
-            form: postData
-        },
+        {url: requestUrl, form: postData},
         onPostResponse
     );
 }
