@@ -4,6 +4,7 @@
   "description": "An auto-update script to professionalize maintenance of paid plugins / themes from Envato / Theme Forest.",
   "main": "fetch.js",
   "dependencies": {
+    "dotenv": "^2.0.0",
     "util": "^0.10.3"
   },
   "devDependencies": {},
