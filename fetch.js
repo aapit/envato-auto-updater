@@ -17,7 +17,12 @@ function route(req, res) {
         // User is redirected after approving Envato API access
         auth.receiveUserPermissionApproval(req, res);
     } else {
-        auth.displayStart(req, res, auth.apiBaseUrl);
+        if (auth.hasAccess()) {
+            res.write('ACCESS GRANTED');
+            res.end();
+        } else {
+            auth.displayStart(req, res, auth.apiBaseUrl);
+        }
     }
 }
 
