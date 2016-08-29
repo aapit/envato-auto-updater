@@ -3,11 +3,12 @@ var env = require('./lib/envato/env');
 var auth = require('./lib/envato/auth');
 
 
+auth.requestAccess();
 
 if (auth.hasAccess()) {
     console.log('💕 WE GOT ACCESS!');
 } else {
-    console.log('🙈  AIN\'T GOT NO ACCESS!');
+    console.log('🙈  I haven\'t got access yet.');
 }
 
 function route(req, res) {
@@ -21,7 +22,7 @@ function route(req, res) {
             res.write('ACCESS GRANTED');
             res.end();
         } else {
-            auth.displayStart(req, res, auth.apiBaseUrl);
+            auth.displayStart(req, res);
         }
     }
 }
